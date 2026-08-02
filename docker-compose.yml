@@ -42,6 +42,8 @@ services:
       PYTHONPATH: /app
     volumes:
       - .:/app
+      - hf_cache:/root/.cache/huggingface
+
     ports:
       - "8501:8501" # Streamlit, used starting Phase 8
     stdin_open: true
@@ -51,6 +53,7 @@ services:
 
 volumes:
   pgdata:
+  hf_cache:
 
 networks:
   dq_copilot_net:

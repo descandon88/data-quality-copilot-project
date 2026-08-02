@@ -32,9 +32,9 @@ from pgvector.psycopg2 import register_vector
 from sentence_transformers import SentenceTransformer
 
 from common.postgresql import get_connection
+from retrieval.settings import EMBED_MODEL_NAME
 
 CHUNKS_PATH = Path(__file__).resolve().parent.parent / "data" / "processed" / "kb_chunks.jsonl"
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 BATCH_SIZE = 32
 
@@ -99,8 +99,8 @@ def main():
     chunks = load_chunks()
     print(f"Loaded {len(chunks)} chunks from {CHUNKS_PATH}")
 
-    print(f"Loading embedding model: {MODEL_NAME} ...")
-    model = SentenceTransformer(MODEL_NAME)
+    print(f"Loading embedding model: {EMBED_MODEL_NAME} ...")
+    model = SentenceTransformer(EMBED_MODEL_NAME)
 
     conn = get_connection()
     register_vector(conn)

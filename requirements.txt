@@ -19,7 +19,7 @@ python-frontmatter==1.1.0
 # --- Phase 4: embeddings & vector indexing ---
 sentence-transformers==3.0.1
 pgvector==0.3.6
-#rank-bm25==0.2.2
+rank-bm25==0.2.2
 
 # --- Phase 6: RAG + LLM agent ---
 #openai==1.44.0

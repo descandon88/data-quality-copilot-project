@@ -12,8 +12,7 @@ from pgvector.psycopg2 import register_vector
 from sentence_transformers import SentenceTransformer
 
 from common.postgresql import get_connection
-
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+from retrieval.settings import EMBED_MODEL_NAME
 
 SEARCH_SQL = """
 SELECT chunk_id, doc_id, title, section, chunk_text,
@@ -25,7 +24,7 @@ LIMIT %s;
 
 
 def search(query: str, k: int = 5):
-    model = SentenceTransformer(MODEL_NAME)
+    model = SentenceTransformer(EMBED_MODEL_NAME)
     query_embedding = model.encode(query, normalize_embeddings=True)
 
     conn = get_connection()
