@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from common.settings import get_engine
+from common.postgresql import get_engine
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 

@@ -1,22 +1,22 @@
 # --- Phase 1: setup ---
 python-dotenv==1.0.1
-psycopg2-binary==2.9.9
-
+psycopg2-binary==2.9.10   # 2.9.9 has no Python 3.13 wheel; bumped for the 3.13 base image
+ 
 # --- Phase 2 prep: sample data generation (Olist + synthetic loyalty layer) ---
-pandas==2.2.2
+pandas==2.2.3  
 Faker==26.0.0
-SQLAlchemy==2.0.32
+SQLAlchemy==2.0.36   
 kaggle==1.6.17
-
-
+ 
+ 
 # --- Phase 3: ingestion & orchestration ---
-dlt[postgres]==0.5.4
+dlt[postgres]==1.29.1
 python-frontmatter==1.1.0
-
+ 
 # --- Phase 3-4: warehouse transforms ---
-dbt-postgres==1.8.2
-
-# --- Phase 4-5: embeddings & vector/hybrid search ---
+# dbt-postgres==1.8.2
+ 
+# --- Phase 4: embeddings & vector indexing ---
 sentence-transformers==3.0.1
 pgvector==0.3.6
 #rank-bm25==0.2.2

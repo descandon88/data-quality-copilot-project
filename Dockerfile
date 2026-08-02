@@ -14,11 +14,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY requirements.txt .
 
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system torch --index-url https://download.pytorch.org/whl/cpu
+RUN uv pip install --system --no-cache torch --index-url https://download.pytorch.org/whl/cpu
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 COPY . .
 

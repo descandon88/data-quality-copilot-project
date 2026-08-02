@@ -24,7 +24,7 @@ from pathlib import Path
 import dlt
 import pandas as pd
 
-from common.settings import get_postgres_url
+from common.postgresql import get_postgres_url
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
