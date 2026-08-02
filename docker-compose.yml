@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: dq_copilot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dq_admin
+      POSTGRES_PASSWORD: dq_password
+      POSTGRES_DB: dq_copilot
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U dq_admin -d dq_copilot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dq_copilot_net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dq_copilot_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Overrides .env's POSTGRES_HOST=localhost — inside the Docker
+      # network, containers reach each other by service name, not localhost.
+      POSTGRES_HOST: postgres
+      # Scripts are run as direct file paths (e.g. `python scripts/foo.py`),
+      # which puts the script's own directory on sys.path, not /app. This
+      # makes the root-level `common` package importable regardless of
+      # which subfolder a script lives in.
+      PYTHONPATH: /app
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501" # Streamlit, used starting Phase 8
+    stdin_open: true
+    tty: true
+    networks:
+      - dq_copilot_net
+
+volumes:
+  pgdata:
+
+networks:
+  dq_copilot_net:
+    driver: bridge

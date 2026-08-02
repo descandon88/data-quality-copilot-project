@@ -1,0 +1,32 @@
+# --- Phase 1: setup ---
+python-dotenv==1.0.1
+psycopg2-binary==2.9.9
+
+# --- Phase 2 prep: sample data generation (Olist + synthetic loyalty layer) ---
+pandas==2.2.2
+Faker==26.0.0
+SQLAlchemy==2.0.32
+kaggle==1.6.17
+
+
+# --- Phase 3: ingestion & orchestration ---
+dlt[postgres]==0.5.4
+python-frontmatter==1.1.0
+
+# --- Phase 3-4: warehouse transforms ---
+dbt-postgres==1.8.2
+
+# --- Phase 4-5: embeddings & vector/hybrid search ---
+sentence-transformers==3.0.1
+pgvector==0.3.6
+#rank-bm25==0.2.2
+
+# --- Phase 6: RAG + LLM agent ---
+#openai==1.44.0
+# anthropic==0.34.2   # uncomment if you'd rather use Claude for generation
+
+# --- Phase 7: evaluation ---
+scikit-learn==1.5.1
+
+# --- Phase 8: UI ---
+#streamlit==1.38.0

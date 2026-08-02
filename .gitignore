@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+pgdata/
+.streamlit/
+*.log
+data/raw/
+data/processed/kb_chunks_old.jsonl
+CLAUDE.md
