@@ -3,7 +3,7 @@ id: RULE-001
 title: Earn-event idempotency check
 enforcement: hard-stop
 owning_team: loyalty-platform
-table: raw.loyalty_transactions
+table: bronze.loyalty_transactions
 originated_from: PM-001
 tags: [idempotency, duplicate-events, points-balance]
 ---
@@ -15,7 +15,7 @@ one row where `transaction_type = 'earn'` within a 24-hour span.
 
 ```sql
 select loyalty_id, order_id, count(*) as earn_count
-from raw.loyalty_transactions
+from bronze.loyalty_transactions
 where transaction_type = 'earn'
   and transaction_timestamp >= now() - interval '24 hours'
 group by loyalty_id, order_id
@@ -36,7 +36,7 @@ warn-and-continue on.
 
 ## Why it wasn't caught earlier
 
-Before PM-001, `raw.loyalty_transactions` was a pure-append table with no
+Before PM-001, `bronze.loyalty_transactions` was a pure-append table with no
 uniqueness constraint and no dedup step — the messaging layer's at-least-once
 delivery guarantee was never matched with idempotent writes on the consumer
 side. This rule exists because that mismatch produced 796 duplicate `earn`

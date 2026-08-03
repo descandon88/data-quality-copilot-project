@@ -108,9 +108,19 @@ def inject_incidents(accounts: pd.DataFrame, transactions: pd.DataFrame):
     summary["null_loyalty_id_rows"] = len(null_mask)
 
     # Incident B: duplicate earn events — ~0.8% of "earn" rows get double-counted,
-    # simulating an at-least-once delivery bug in the event pipeline (no idempotency key).
+    # simulating an at-least-once delivery bug in the event pipeline (no
+    # idempotency key). The duplicate gets a NEW transaction_id, matching
+    # PM-001's actual claim ("a second earn row with a new transaction_id but
+    # the same order_id and loyalty_id") — deliberately NOT an exact-duplicate
+    # row. An exact duplicate (same transaction_id) would get silently
+    # deduped away by ingestion/pipeline.py's transaction_id-keyed merge load
+    # before it ever reached bronze, masking the actual failure mode this
+    # incident is meant to demonstrate. RULE-001's detection query groups by
+    # (loyalty_id, order_id), not transaction_id, so it still catches this.
     earn_rows = transactions[transactions["transaction_type"] == "earn"]
-    dup_sample = earn_rows.sample(frac=0.008, random_state=SEED)
+    dup_sample = earn_rows.sample(frac=0.008, random_state=SEED).copy()
+    next_id = len(transactions)
+    dup_sample["transaction_id"] = [f"TXN-{next_id + i:08d}" for i in range(len(dup_sample))]
     transactions = pd.concat([transactions, dup_sample], ignore_index=True)
     summary["duplicate_earn_rows"] = len(dup_sample)
 

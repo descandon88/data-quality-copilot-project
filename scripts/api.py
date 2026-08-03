@@ -10,7 +10,7 @@ kaggle.com/settings -> API -> Create New Token). The kaggle package reads these
 from the environment automatically — no kaggle.json file needed.
 
 Run inside the app container:
-    docker compose exec app python scripts/download_olist.py
+    docker compose exec app python scripts/api.py
 """
 import os
 from pathlib import Path

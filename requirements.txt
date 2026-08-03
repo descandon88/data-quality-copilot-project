@@ -22,11 +22,19 @@ pgvector==0.3.6
 rank-bm25==0.2.2
 
 # --- Phase 6: RAG + LLM agent ---
-#openai==1.44.0
-# anthropic==0.34.2   # uncomment if you'd rather use Claude for generation
+# Groq, via its OpenAI-compatible Responses API — client is the `openai`
+# package, pointed at base_url="https://api.groq.com/openai/v1" with
+# model="llama-3.1-8b-instant" (fast/free, but its tool-calling output is
+# occasionally malformed — see agent/settings.py and agent/copilot.py;
+# llama-3.3-70b-versatile is Groq's more tool-call-reliable alternative on
+# the same free key, at the cost of latency). Switched from Anthropic: the
+# $20/mo Claude Pro plan doesn't carry API credit (that's billed
+# separately), and Groq offers a free API tier.
+openai==2.52.0
+# anthropic==0.120.2   # uncomment to switch generation back to Claude
 
 # --- Phase 7: evaluation ---
-scikit-learn==1.5.1
+# scikit-learn==1.5.2   # 1.5.1 has no Python 3.13 wheel; not needed until Phase 7
 
 # --- Phase 8: UI ---
 #streamlit==1.38.0
