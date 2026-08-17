@@ -1,0 +1,27 @@
+# Project-local profiles.yml, not the usual ~/.dbt/profiles.yml — kept
+# inside the repo (like everything else in this project) so `dbt` commands
+# work identically for anyone who clones it, with no machine-local setup
+# step. docker-compose.yml sets DBT_PROFILES_DIR=/app/dbt_project on the
+# `app` service, so commands only need --project-dir:
+#     docker compose exec app dbt run --project-dir dbt_project
+# (Running outside that container? Pass --profiles-dir dbt_project too.)
+#
+# Reads the exact same POSTGRES_* env vars as common/postgresql.py (see
+# that file's docstring) via dbt's env_var() — no new credentials, no
+# second source of truth. Inside the app container, POSTGRES_HOST is
+# already overridden to "postgres" by docker-compose.yml's environment
+# block, same as every other script in this project.
+dq_copilot:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'dq_admin') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dq_password') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'dq_copilot') }}"
+      # Base/default schema — every model overrides this via dbt_project.yml's
+      # +schema (staging / silver), so nothing actually lands in "dbt" itself.
+      schema: dbt
+      threads: 4

@@ -14,7 +14,11 @@ dlt[postgres]==1.29.1
 python-frontmatter==1.1.0
  
 # --- Phase 3-4: warehouse transforms ---
-# dbt-postgres==1.8.2
+# Latest available on PyPI as of this pin (checked live, not guessed) —
+# dbt-core has historically lagged a Python release behind; re-check if
+# the Dockerfile's build ever fails resolving this against the 3.13 base
+# image, same caveat as psycopg2-binary's pin above.
+dbt-postgres==1.11.0
  
 # --- Phase 4: embeddings & vector indexing ---
 sentence-transformers==3.0.1

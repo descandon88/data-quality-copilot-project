@@ -1,0 +1,43 @@
+name: 'dq_copilot'
+version: '1.0.0'
+config-version: 2
+
+profile: 'dq_copilot'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dq_copilot:
+    staging:
+      # Views, not tables: staging models do light renaming/casting only
+      # (see models/staging/*.sql) — materializing them as tables would
+      # duplicate bronze's data for no reason. Schema "staging" (not
+      # "bronze") on purpose: bronze is dlt's ingestion-owned schema
+      # (see ingestion/pipeline.py) — staging is a dbt-owned read layer on
+      # top of it, kept separate so it's obvious which tool owns which
+      # schema. See macros/generate_schema_name.sql for why this becomes
+      # exactly "staging", not "<profile_schema>_staging".
+      +schema: staging
+      +materialized: view
+    marts:
+      # Table, not view: rule_violations is queried repeatedly (by the
+      # agent's query_warehouse tool, and eventually Phase 9's monitoring
+      # dashboard) — materializing it once per `dbt run` instead of
+      # recomputing 5 unioned CTEs on every query is the actual point of
+      # having this mart instead of 5 raw SQL blocks copy-pasted into every
+      # consumer.
+      +schema: silver
+      +materialized: table
+      rule_checks:
+        # The 5 per-rule models are logical building blocks for
+        # rule_violations.sql's UNION ALL, not artifacts anyone should
+        # query directly — ephemeral means dbt inlines each as a CTE at
+        # query time instead of creating 5 extra tables/views in `silver`
+        # that would just be noise next to the one mart that matters.
+        +materialized: ephemeral

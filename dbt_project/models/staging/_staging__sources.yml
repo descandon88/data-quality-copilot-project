@@ -1,0 +1,35 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Raw-but-typed loyalty + Olist tables, loaded by dlt
+      (ingestion/pipeline.py) — merge-load (upsert) for loyalty_accounts
+      and loyalty_transactions, full-snapshot replace for the Olist
+      reference tables. dbt only reads this schema; dlt owns writing it.
+    schema: bronze
+    tables:
+      - name: loyalty_accounts
+        description: >
+          One row per loyalty account. See
+          knowledge_base/contracts/CONTRACT-001.md for the full contract.
+        columns:
+          - name: loyalty_id
+            description: Primary key.
+            tests:
+              - unique
+              - not_null
+      - name: loyalty_transactions
+        description: >
+          Points earn/redeem/adjust/expire events. See
+          knowledge_base/contracts/CONTRACT-002.md for the full contract.
+          Deliberately NOT testing loyalty_id for not_null here — ~1.5% of
+          rows legitimately have a null loyalty_id (see PM-002/RULE-002);
+          that's the documented incident this project's rule_violations
+          mart tracks, not something a source test should flag as broken.
+        columns:
+          - name: transaction_id
+            description: Primary key.
+            tests:
+              - unique
+              - not_null

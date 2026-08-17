@@ -39,7 +39,7 @@ warn-and-continue on.
 Before PM-001, `bronze.loyalty_transactions` was a pure-append table with no
 uniqueness constraint and no dedup step — the messaging layer's at-least-once
 delivery guarantee was never matched with idempotent writes on the consumer
-side. This rule exists because that mismatch produced 796 duplicate `earn`
+side. This rule exists because that mismatch produced 787 duplicate `earn`
 rows over a six-day window before anyone noticed.
 
 ## What "passing" actually fixes vs. what it doesn't

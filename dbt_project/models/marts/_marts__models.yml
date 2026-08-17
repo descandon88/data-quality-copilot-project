@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: rule_violations
+    description: >
+      One row per currently-detected violation of any RULE-00X check
+      (knowledge_base/rules/*.md), unioned from the 5 ephemeral
+      rule_checks/*.sql models. Adapted from each rule's documented
+      "last 24 hours of a load window" check to a full historical scan —
+      see rule_checks/rule_001_violations.sql's header comment for why.
+    columns:
+      - name: rule_id
+        description: Which RULE-00X check this row violates.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['RULE-001', 'RULE-002', 'RULE-003', 'RULE-004', 'RULE-005']
+      - name: enforcement
+        description: hard-stop or warn-and-continue, per the originating rule doc.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['hard-stop', 'warn-and-continue']
+      - name: entity_type
+        description: What kind of row this violation is attached to.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['transaction', 'account']
+      - name: entity_id
+        description: >
+          The violating row's natural key — transaction_id, loyalty_id, or
+          "loyalty_id:order_id" for RULE-001 (a group, not a single row —
+          see rule_001_violations.sql).
+        tests:
+          - not_null
+      - name: detected_at
+        description: When this `dbt run` computed the row, not when the violation actually occurred.
+        tests:
+          - not_null

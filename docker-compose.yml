@@ -40,6 +40,11 @@ services:
       # makes the root-level `common` package importable regardless of
       # which subfolder a script lives in.
       PYTHONPATH: /app
+      # dbt_project/profiles.yml is kept in-repo (not ~/.dbt/profiles.yml)
+      # for the same reproducibility reason as everything else here — this
+      # env var means `dbt` commands only need --project-dir dbt_project,
+      # not also --profiles-dir dbt_project every time.
+      DBT_PROFILES_DIR: /app/dbt_project
     volumes:
       - .:/app
       - hf_cache:/root/.cache/huggingface
