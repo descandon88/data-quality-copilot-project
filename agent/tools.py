@@ -28,6 +28,7 @@ from retrieval.hybrid_search import (
     rerank_and_diversify,
     vector_search,
 )
+from retrieval.query_rewrite import rewrite_query
 from retrieval.settings import (
     BM25_TOP_N,
     EMBED_MODEL_NAME,
@@ -58,9 +59,14 @@ def _get_reranker():
 
 
 def search_knowledge_base(query: str, k: int = 5) -> str:
-    """Runs the Phase 5 hybrid search + rerank pipeline and returns a
+    """Rewrites the query (retrieval/query_rewrite.py — a cheap, separate-
+    quota LLM call that reformulates the question into the knowledge
+    base's own phrasing, fails open to the original query on any error),
+    then runs the Phase 5 hybrid search + rerank pipeline and returns a
     formatted string of the top results, each tagged with its doc_id so the
     model can cite sources in its final answer."""
+    search_query = rewrite_query(query)
+
     conn = get_connection()
     register_vector(conn)
     try:
@@ -68,8 +74,8 @@ def search_knowledge_base(query: str, k: int = 5) -> str:
         chunk_by_id = {c["chunk_id"]: c for c in all_chunks}
 
         embed_model = _get_embed_model()
-        vector_ranked = vector_search(conn, embed_model, query, VECTOR_TOP_N)
-        bm25_ranked = bm25_search(all_chunks, query, BM25_TOP_N)
+        vector_ranked = vector_search(conn, embed_model, search_query, VECTOR_TOP_N)
+        bm25_ranked = bm25_search(all_chunks, search_query, BM25_TOP_N)
     finally:
         conn.close()
 
@@ -79,7 +85,7 @@ def search_knowledge_base(query: str, k: int = 5) -> str:
         return "No matching documents found in the knowledge base."
 
     reranker = _get_reranker()
-    results = rerank_and_diversify(query, shortlist_ids, chunk_by_id, reranker, top_k=k)
+    results = rerank_and_diversify(search_query, shortlist_ids, chunk_by_id, reranker, top_k=k)
     if not results:
         return "No matching documents found in the knowledge base."
 

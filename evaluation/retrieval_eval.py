@@ -1,9 +1,10 @@
 """
-Retrieval evaluation: compares four retrieval strategies against the "kb"
+Retrieval evaluation: compares five retrieval strategies against the "kb"
 and "combined" ground truth questions (the ones with a known-correct
 expected_doc_id) — vector-only, BM25-only, hybrid RRF fusion (no rerank),
-and the actual Phase 5 production pipeline (hybrid RRF + cross-encoder
-rerank + per-doc diversity cap).
+the actual Phase 5 production pipeline (hybrid RRF + cross-encoder rerank
++ per-doc diversity cap), and that same production pipeline with Phase 10's
+query rewriting (retrieval/query_rewrite.py) added in front of it.
 
 Metrics: Hit Rate@K (did the expected doc_id appear anywhere in the top K
 *distinct documents*) and MRR@K (mean reciprocal rank of the expected doc's
@@ -18,6 +19,19 @@ document's chunks crowd out a document that was actually the right answer
 (Phase 4's "why would loyalty point balances be wrong" query returning 5/5
 chunks from PM-001 and excluding RULE-001 entirely). If that's still true,
 vector-only's Hit Rate@K should visibly trail hybrid+rerank's here.
+
+The 5th strategy ("+ query-rewrite") is the same measurement instinct
+applied to Phase 10's query rewriting bonus point: rather than just
+asserting rewriting helps, run it through this same harness and see
+whether Hit Rate@K/MRR@K actually move versus the production baseline.
+This strategy makes one extra Groq call per question (query_rewrite.py's
+QUERY_REWRITE_MODEL_NAME, llama-3.1-8b-instant — a separate quota bucket
+from the generation model, same one Phase 7's judge and ground-truth
+generation already use) — modest for ~41 kb/combined questions, but a real
+API cost the other four strategies don't have. query_rewrite.py fails open
+to the original question on any error (including a quota 429), so a quota
+issue mid-run degrades this strategy toward matching the production
+baseline's numbers rather than crashing the whole eval.
 
 Run inside the app container:
     docker compose exec app python evaluation/retrieval_eval.py
@@ -36,6 +50,7 @@ from retrieval.hybrid_search import (
     rerank_and_diversify,
     vector_search,
 )
+from retrieval.query_rewrite import rewrite_query
 from retrieval.settings import (
     BM25_TOP_N,
     EMBED_MODEL_NAME,
@@ -141,11 +156,26 @@ def main():
         reranked = rerank_and_diversify(query, shortlist_ids, chunk_by_id, reranker)
         return doc_ids_in_order([cid for cid, _ in reranked], chunk_by_id)
 
+    def hybrid_reranked_with_rewrite(query):
+        # rewrite_query() fails open to `query` unchanged on any error (see
+        # retrieval/query_rewrite.py) — verbose=True here so a quota/network
+        # fallback is visible in this eval run's own output, not silent.
+        rewritten = rewrite_query(query, verbose=True)
+        vector_ranked = vector_search(conn, embed_model, rewritten, VECTOR_TOP_N)
+        bm25_ranked = bm25_search(all_chunks, rewritten, BM25_TOP_N)
+        fused = reciprocal_rank_fusion(vector_ranked, bm25_ranked)
+        shortlist_ids = [cid for cid, _ in fused[:FUSED_SHORTLIST_SIZE]]
+        if not shortlist_ids:
+            return []
+        reranked = rerank_and_diversify(rewritten, shortlist_ids, chunk_by_id, reranker)
+        return doc_ids_in_order([cid for cid, _ in reranked], chunk_by_id)
+
     strategies = [
         ("vector-only", vector_only),
         ("bm25-only", bm25_only),
         ("hybrid-rrf (no rerank)", hybrid_fused),
         ("hybrid-rrf + rerank (production)", hybrid_reranked),
+        ("hybrid-rrf + rerank + query-rewrite", hybrid_reranked_with_rewrite),
     ]
 
     print(f"\nEvaluating {len(strategies)} retrieval strategies at K={EVAL_TOP_K}...\n")
