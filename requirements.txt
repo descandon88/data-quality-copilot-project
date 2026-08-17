@@ -42,3 +42,10 @@ openai==2.52.0
 
 # --- Phase 8: UI ---
 #streamlit==1.38.0
+
+# --- Phase 10: testing ---
+# Unit tests (tests/) exercise pure logic only — the SQL guard, RRF/rerank/
+# diversity-cap, markdown chunking — via mocked DB calls and a fake
+# reranker (see tests/conftest.py), no live Postgres or Groq needed. Run
+# with: docker compose exec app pytest
+pytest==9.1.1
