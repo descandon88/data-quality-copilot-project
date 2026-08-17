@@ -4,6 +4,16 @@
 MODEL_NAME = "llama-3.3-70b-versatile"
 MAX_TOOL_ROUNDS = 5
 
+# Caps completion length on every Groq call this model makes (tool-call
+# rounds AND the final answer). MODEL_NAME has a 100k-tokens/day cap on
+# this project's free Groq tier (shared across live queries and every
+# Phase 7 eval script) — bounding worst-case completion tokens per call
+# keeps one unusually long/rambling answer from eating a disproportionate
+# share of that budget. SYSTEM_PROMPT already asks for concise answers;
+# this is a hard backstop, not the primary mechanism. 500 tokens is
+# generous headroom over the 1-3 sentence answers observed in practice.
+MAX_ANSWER_TOKENS = 500
+
 SYSTEM_PROMPT = """You are the Data Quality Incident Copilot for a retail loyalty \
 platform's data engineering team. You answer questions using two tools:
 

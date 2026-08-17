@@ -11,6 +11,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 GROUND_TRUTH_PATH = DATA_DIR / "ground_truth.jsonl"
 RETRIEVAL_RESULTS_PATH = DATA_DIR / "retrieval_eval_results.jsonl"
 AGENT_RESULTS_PATH = DATA_DIR / "agent_eval_results.jsonl"
+COMPARE_RESULTS_PATH = DATA_DIR / "llm_eval_compare_results.jsonl"
 
 # --- generate_ground_truth.py ---
 # How many LLM-generated questions per knowledge_base doc. Kept small (3) to

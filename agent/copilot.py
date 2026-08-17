@@ -32,7 +32,7 @@ import sys
 
 from openai import BadRequestError, OpenAI
 
-from agent.settings import MAX_TOOL_ROUNDS, MODEL_NAME, SYSTEM_PROMPT
+from agent.settings import MAX_ANSWER_TOKENS, MAX_TOOL_ROUNDS, MODEL_NAME, SYSTEM_PROMPT
 from agent.tools import TOOL_DEFINITIONS, TOOL_FUNCTIONS
 
 
@@ -48,15 +48,20 @@ def ask(question: str, verbose: bool = True, return_trace: bool = False):
 
     By default returns just the final answer string (unchanged CLI
     behavior). Pass return_trace=True to additionally get back the ordered
-    list of tool names actually called — evaluation/agent_eval.py uses this
+    list of tool names actually called (evaluation/agent_eval.py uses this
     to score tool-routing accuracy against a question's expected_tools
-    without having to scrape stdout.
+    without having to scrape stdout) and the total Groq tokens consumed
+    across every call this question made (every tool-call round plus the
+    final answer round) — the eval harnesses sum this across a run to show
+    running consumption against the free tier's 100k-tokens/day cap instead
+    of only finding out it's exhausted when a call fails.
     """
     client = get_client()
     tools_called = []
+    total_tokens = 0
 
     def finish(answer):
-        return (answer, tools_called) if return_trace else answer
+        return (answer, tools_called, total_tokens) if return_trace else answer
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -71,23 +76,42 @@ def ask(question: str, verbose: bool = True, return_trace: bool = False):
         # is model/backend flakiness, not a bug in this loop.
         # parallel_tool_calls=False forces the single-call decoding path
         # (which is what our system prompt's "search first, then query"
-        # sequencing already assumes) and one retry absorbs the cases where
-        # the failure is a one-off rather than deterministic per-prompt.
-        for attempt in range(2):
+        # sequencing already assumes).
+        #
+        # 3 attempts (2 retries), not 1: a 47-question Phase 7 eval run
+        # measured 3/14 questions still failing after a single retry — if
+        # failures are roughly independent per attempt, that implies a
+        # ~45-50% per-call failure rate right now, meaning 2 attempts only
+        # gets to ~20-25% still failing. A 3rd attempt should bring that
+        # down to single digits. This is absorbing a currently-elevated
+        # Groq-side failure rate, not compensating for a bug in this loop.
+        for attempt in range(3):
             try:
                 response = client.chat.completions.create(
                     model=MODEL_NAME,
                     messages=messages,
                     tools=TOOL_DEFINITIONS,
                     parallel_tool_calls=False,
+                    max_tokens=MAX_ANSWER_TOKENS,
                 )
                 break
             except BadRequestError as e:
-                if getattr(e, "code", None) == "tool_use_failed" and attempt == 0:
+                if getattr(e, "code", None) == "tool_use_failed" and attempt < 2:
                     if verbose:
-                        print("  [retry] Groq tool_use_failed, retrying once...")
+                        print(f"  [retry] Groq tool_use_failed, retrying (attempt {attempt + 2}/3)...")
                     continue
                 raise
+        # Known undercount, stated plainly rather than glossed over: a
+        # failed tool_use_failed attempt is a 400 error from Groq's API, so
+        # the openai client's BadRequestError doesn't carry a usable
+        # usage/token count for that attempt — only the winning attempt's
+        # response.usage is countable here. Retried questions really did
+        # spend more tokens than this total reflects; there's no client-side
+        # way to recover that number from the SDK's exception object.
+        # response.usage can also be None on some mock/edge-case responses;
+        # guard rather than let token tracking crash a real answer.
+        if response.usage:
+            total_tokens += response.usage.total_tokens
         message = response.choices[0].message
 
         if not message.tool_calls:
