@@ -8,3 +8,7 @@ pgdata/
 data/raw/
 data/processed/kb_chunks_old.jsonl
 CLAUDE.md
+SESSION_HANDOFF.md
+
+
+.env.example
