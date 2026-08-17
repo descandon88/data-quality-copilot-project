@@ -41,7 +41,8 @@ openai==2.52.0
 # scikit-learn==1.5.2   # 1.5.1 has no Python 3.13 wheel; not needed until Phase 7
 
 # --- Phase 8: UI ---
-#streamlit==1.38.0
+# Latest available on PyPI as of this pin (checked live).
+streamlit==1.61.1
 
 # --- Phase 10: testing ---
 # Unit tests (tests/) exercise pure logic only — the SQL guard, RRF/rerank/
