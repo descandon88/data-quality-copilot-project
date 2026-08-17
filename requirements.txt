@@ -44,6 +44,11 @@ openai==2.52.0
 # Latest available on PyPI as of this pin (checked live).
 streamlit==1.61.1
 
+# --- Phase 9: monitoring ---
+# No new package — monitoring/db.py reuses psycopg2-binary (Phase 1) and
+# pandas (Phase 2 prep) already pinned above, and monitoring/dashboard.py
+# reuses this same streamlit pin.
+
 # --- Phase 10: testing ---
 # Unit tests (tests/) exercise pure logic only — the SQL guard, RRF/rerank/
 # diversity-cap, markdown chunking — via mocked DB calls and a fake

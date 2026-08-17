@@ -50,7 +50,8 @@ services:
       - hf_cache:/root/.cache/huggingface
 
     ports:
-      - "8501:8501" # Streamlit, used starting Phase 8
+      - "8501:8501" # Streamlit chat UI (Phase 8)
+      - "8502:8502" # Streamlit monitoring dashboard (Phase 9)
     stdin_open: true
     tty: true
     networks:
