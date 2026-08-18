@@ -9,12 +9,6 @@ incidents produced, and the current state of the warehouse — instead of
 grepping through postmortem docs or hand-writing SQL against tables whose
 schema they half-remember.
 
-The target reader of this README is a data engineering / analytics
-engineering hiring manager, not an AI-engineering one. The retrieval and
-agent pieces exist to make an otherwise-ordinary data platform project
-queryable in plain English — they are not the point of the project on their
-own.
-
 ## Objective
 
 Build a production-shaped, *evaluable* RAG system for a realistic
